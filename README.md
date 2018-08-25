@@ -1,9 +1,13 @@
 # Overview
 This is a simple python server that I (Thomas O'Keeffe) created because I thought many other servers (Apache, Nginx, etc) were too complex and resource intensive for simple applications.
+Great for use in a testing environment, or as I use it, for remote managing networks of sensors.
 
-As a result, this server is a (relatively) small and easily extensible **boilerplate** that can be extended through python and any language that can interface with python. Note: This is not a server architecture. It is boilerplate code for you to modify to fit your needs.
+As a result, this server is a (relatively) small and easily extensible **boilerplate** that can be extended through python and any language that can interface with python.
+Note: This is not a server architecture. It is boilerplate code for you to modify to fit your needs.
 
 Launching the server "as is" is simple. Just open a terminal in the root package directory and run `sudo ./startup.py`. You can then navigate to `https://localhost` (you may need to add a security exception) and watch the random numbers appear.
+
+The username is `guest` and the password is `password`. This is configurable in the `passwd` file.
 # Basic Functionality
 
 ### Things included
