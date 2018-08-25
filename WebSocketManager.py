@@ -13,9 +13,11 @@ logger.setLevel(logging.INFO)
 def handle_clients(transfer_manager):
 	while True:
 		time.sleep(1)
-		data = transfer_manager.transferQueue.pop()
-		for client in WebSocketClient.clients:
-			client.sendMessage(str(data))
+		if transfer_manager.transferQueue:
+			data = transfer_manager.transferQueue.popleft()
+			for client in WebSocketClient.clients:
+				client.sendMessage(str(data))
+				print("test")
 
 
 class WebSocketClient(WebSocket):

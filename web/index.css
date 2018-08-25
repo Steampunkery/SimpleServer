@@ -1,5 +1,14 @@
 div {
     height: 25vh;
     width: 100vw;
-    border: 2px solid black;
+    background-color: #618199;
+    font-family: 'Roboto', sans-serif;
+    font-size: 5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+body {
+    background-color: #4b5b63;
+    margin: 0;
 }
