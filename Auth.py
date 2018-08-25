@@ -46,11 +46,9 @@ class CookieUtils:
     @staticmethod
     def store_cookies():
         """Write cookies from web.servers.COOKIES to cookies.json"""
-        try:
-            with open("cookies.json", "w") as cookies_json:
-                json.dump(web.servers.COOKIES, cookies_json)
-        except IOError:
-            logger.error("File cookies.json could not be opened for writing, new clients will need to re-authenticate.")
+        with open("cookies.json", "w") as cookies_json:
+            json.dump(web.servers.COOKIES, cookies_json)
+
 
     @staticmethod
     def load_cookies() -> dict:
@@ -82,11 +80,9 @@ class PasswordUtils:
     @staticmethod
     def store_passwords():
         """Write passwords from web.servers.ACCOUNTS to passwd"""
-        try:
-            with open("passwd", "w") as passwd_json:
-                json.dump(web.servers.ACCOUNTS, passwd_json)
-        except IOError:
-            logger.error("Passwords could not be written. THIS IS BAD. Check passwd file, please!")
+        with open("passwd", "w") as passwd_json:
+            json.dump(web.servers.ACCOUNTS, passwd_json)
+
 
     @staticmethod
     def load_passwords() -> dict:

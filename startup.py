@@ -6,7 +6,6 @@ import ssl
 
 import WebSocketManager
 import TransferManager
-import HtmlInjector
 import Backend
 import Auth
 
@@ -29,34 +28,29 @@ def main(server_class=ThreadedHTTPServer, handler_class=Server, port=443):
 	# Closure to gracefully handle ^C
 	# noinspection PyUnusedLocal
 	def signal_handler(signal_, frame):
-		fail_flag = 0
-		try:
-			HtmlInjector.remove_html()
-		except IOError:
-			logger.error("index.html could not be opened for editing, you will need to edit it by hand!")
-			fail_flag = 1
+		exit_code = 0
 
 		https.server_close()
 		print()
 		logger.info('Stopping https...')
 
 		logger.info('Writing cookies...')
-		Auth.CookieUtils.store_cookies()
+		try:
+			Auth.CookieUtils.store_cookies()
+		except IOError:
+			logger.error("File cookies.json could not be opened for writing, new clients will need to re-authenticate.")
+			exit_code = 1
 
 		logger.info('Writing passwords...')
-		Auth.PasswordUtils.store_passwords()
+		try:
+			Auth.PasswordUtils.store_passwords()
+		except IOError:
+			logger.error("Passwords could not be written. THIS IS BAD. Check passwd file, please!")
+			exit_code = 1
 
-		sys.exit(fail_flag)
+		sys.exit(exit_code)
 
 	signal.signal(signal.SIGINT, signal_handler)
-
-	dynamic_html = HtmlInjector.generate_html()
-
-	try:
-		HtmlInjector.insert_html(dynamic_html)
-	except IOError:
-		logger.error("index.html not found! Aborting!")
-		sys.exit(1)
 
 	https = server_class(("0.0.0.0", port), handler_class)
 	https.socket = context.wrap_socket(https.socket, server_side=True)

@@ -4,8 +4,8 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qsl
 from binascii import hexlify
 from http.cookies import SimpleCookie
-from startup import DOMAIN
 
+import startup
 import magic
 import os
 import time
@@ -98,7 +98,7 @@ class Server(BaseHTTPRequestHandler):
 
 		# Prevent people from accessing non-login pages without a cookie
 		if not self.cookie and (self.path not in Server.LOGIN_PAGES):
-			self.send_redirect(f"https://{DOMAIN}/login.html")
+			self.send_redirect(f"https://{startup.DOMAIN}/login.html")
 			return
 
 		# Update time when cookie was last accessed
@@ -147,9 +147,9 @@ class Server(BaseHTTPRequestHandler):
 				session_id = hexlify(os.urandom(16)).decode('ascii')
 				created_cookie = f"SID={session_id}; Path=/; Secure; Expires=Tue, 19 Jan 2038 04:14:07"
 				COOKIES[session_id] = int(time.time())
-				self.send_redirect(f'https://{DOMAIN}/', cookie=created_cookie)
+				self.send_redirect(f'https://{startup.DOMAIN}/', cookie=created_cookie)
 			else:
-				self.send_redirect(f'https://{DOMAIN}/login.html')
+				self.send_redirect(f'https://{startup.DOMAIN}/login.html')
 
 
 class RedirectServer(BaseHTTPRequestHandler):
@@ -160,7 +160,7 @@ class RedirectServer(BaseHTTPRequestHandler):
 	def do_GET(self):
 		self.send_response(301)
 		self.send_header('Cache-Control', 'no-store')
-		self.send_header('Location', f'https://{DOMAIN}')
+		self.send_header('Location', f'https://{startup.DOMAIN}')
 		self.end_headers()
 
 
