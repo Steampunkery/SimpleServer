@@ -4,7 +4,8 @@ if ("WebSocket" in window) {
 
 	socket.addEventListener('message', function (event) {
 	    	var message = event.data;
-	    	$("div").text(message);
+	    	var text = $("div").text();
+	    	$("div").text(text + message);
 	});
 } else {
 	window.alert("Websockets are not supported. This webpage WILL NOT WORK!");
