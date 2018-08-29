@@ -6,20 +6,43 @@ from multiprocessing import Process, Pipe, Manager
 import logging
 import time
 import Backend
+import json
 
 logger = logging.getLogger(__name__)
 logging.basicConfig()
 logger.setLevel(logging.INFO)
 
-STOP = False
+# TODO: Move this to the README
+"""
+Format of a JSON packet:
+{
+	"css_selector": "div",
+	"payload": "lorem ipsum dolor sit amet",
+	"overwrite": "true"
+}
+
+css_selector: A valid css selector used to determine which element's content to change
+payload: The text to deliver to the page. Could be plaintext, or it could be more HTML
+overwrite: Whether the new content should overwrite the old content or replace it (default is true)
+"""
+
+
+def create_json(css_selector, payload, overwrite=True):
+	return json.dumps(
+		{
+			"css_selector": css_selector,
+			"payload": str(payload),
+			"overwrite": str(overwrite).lower()
+		}
+	)
 
 
 def handle_clients():
 	manager = Manager()
 	queue = manager.Queue()
 
-	backend_process = Process(target=Backend.run, args=(queue,))
-	backend_process.start()
+	WebSocketHandler.processes.append(Process(target=Backend.run, args=(queue,)))
+	WebSocketHandler.processes[-1].start()
 
 	"""
 	The concept here is this loop receives a random number from Backend.run every second.
@@ -31,22 +54,19 @@ def handle_clients():
 		if not queue.empty():
 			timeout = time.time() + 5
 			data = queue.get_nowait()
-			for client in WebSocketClient.clients:
-				client.sendMessage(str(data))
-		if time.time() > timeout and not STOP:
+			for client in WebSocketHandler.clients:
+				client.sendMessage(create_json("div", data))
+		if time.time() > timeout or WebSocketHandler.stop:
 			break
 
-	backend_process.terminate()
+	"""
+	Manually terminate the process here because something probably went wrong,
+	like the backend being stopped by and outside program
+	"""
+	WebSocketHandler.processes[-1].terminate()
 
 
 def process_client(client):
-	# Tm.MetaTransferManager.register('TransferManager', Tm.TransferManager, exposed=['add_to_queue', 'get_queue'])
-	#
-	# manager = Tm.MetaTransferManager()
-	# manager.start()
-	#
-	# transfer_manager = manager.TransferManager()
-
 	recv_pipe, send_pipe = Pipe(duplex=False)
 	backend_process = Process(target=Backend.run, args=(send_pipe,))
 	backend_process.start()
@@ -56,7 +76,7 @@ def process_client(client):
 	"""
 	It is important to include some kind of a timeout or condition that halts the loop.
 	If you don't do this, the process will never join. You could even set a boolean in
-	the function that handle SIGTERM to terminate it. Just make sure that it does terminate at some point.
+	the function that handle SIGTERM to terminate it (current impl). Just make sure that it does terminate at some point.
 	"""
 	timeout = time.time() + 5
 	while True:
@@ -64,17 +84,19 @@ def process_client(client):
 		if recv_pipe.poll():
 			timeout = time.time() + 5
 			data = recv_pipe.recv()
-			client.sendMessage(str(data))
-		if time.time() > timeout and not STOP:
+			client.sendMessage(create_json("div", data, overwrite=True))
+		if time.time() > timeout or WebSocketHandler.stop:
 			break
 
 	backend_process.join()
 
 
-class WebSocketClient(WebSocket):
+class WebSocketHandler(WebSocket):
 
 	clients = []
+	processes = []
 	total_clients = 0
+	stop = False
 
 	def __init__(self, server, sock, address):
 		super().__init__(server, sock, address)
@@ -85,18 +107,22 @@ class WebSocketClient(WebSocket):
 		if False:
 			Thread(target=process_client, args=(self,), daemon=True).start()
 		else:
-			WebSocketClient.clients.append(self)
-		self.id = WebSocketClient.total_clients
+			WebSocketHandler.clients.append(self)
+		self.id = WebSocketHandler.total_clients
 		logger.info(f"Client {self.id} has connected")
-		WebSocketClient.total_clients += 1
+		WebSocketHandler.total_clients += 1
 
 	def handleClose(self):
 		logger.info(f"Client {self.id} has disconnected")
-		WebSocketClient.clients.remove(self)
+		WebSocketHandler.clients.remove(self)
+
+	@classmethod
+	def cleanup(cls):
+		cls.stop = True
 
 
 def run(port=8000):
-	server = SimpleSSLWebSocketServer(DOMAIN, port, WebSocketClient, ".ssl/site.crt", ".ssl/site.key")
+	server = SimpleSSLWebSocketServer(DOMAIN, port, WebSocketHandler, ".ssl/site.crt", ".ssl/site.key")
 	Thread(target=server.serveforever, daemon=True).start()
 	logger.info(f"Listening for WebSocket connections on {port}...")
 

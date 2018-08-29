@@ -16,10 +16,12 @@ logger = logging.getLogger(__name__)
 logging.basicConfig()
 logger.setLevel(logging.INFO)
 
+# TODO: Make this configurable
 MIME_TYPE_OVERRIDES = {
 	"css": "text/css"
 }
 
+# TODO: Make this configurable
 RESPONSE_OVERRIDES = {
 	".ssl": 404,
 	"servers.py": 404
@@ -31,6 +33,7 @@ ACCOUNTS = Auth.PasswordUtils.load_passwords()
 
 
 class Server(BaseHTTPRequestHandler):
+	# TODO: Make this configurable
 	LOGIN_PAGES = ("login.html", "reset.css", "login.css", "login.png")
 
 	def __init__(self, request, client_address, server):

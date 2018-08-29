@@ -30,8 +30,8 @@ def main(port=443, httpd_port=80):
 	def signal_handler(signal_, frame):
 		exit_code = 0
 
-		WebSocketManager.STOP = True
-		time.sleep(0.1)  # Wait for the processes to stop
+		WebSocketManager.WebSocketHandler.cleanup()
+		time.sleep(0.5)
 
 		https.server_close()
 		httpd.server_close()
